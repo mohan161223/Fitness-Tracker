@@ -1,0 +1,41 @@
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_MPU6050.h>
+#include <BluetoothSerial.h>
+
+Adafruit_MPU6050 mpu;
+BluetoothSerial SerialBT;
+
+void setup() {
+  Serial.begin(115200);
+  SerialBT.begin("ESP32_ActivityTracker"); // Bluetooth device name
+
+  // Initialize IMU
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1) {
+      delay(10);
+    }
+  }
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+
+  Serial.println("MPU6050 Found!");
+}
+
+void loop() {
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  // Create a JSON string with the IMU data
+  String data = String("{\"accX\":") + a.acceleration.x + 
+                ",\"accY\":" + a.acceleration.y + 
+                ",\"accZ\":" + a.acceleration.z + 
+                ",\"gyroX\":" + g.gyro.x + 
+                ",\"gyroY\":" + g.gyro.y + 
+                ",\"gyroZ\":" + g.gyro.z + "}";
+
+  SerialBT.println(data);
+  delay(100); // Adjust the delay as needed
+}
